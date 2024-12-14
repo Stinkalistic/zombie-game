@@ -7,6 +7,10 @@ const SCALE = 2; // Scale up for display
 canvas.width = WIDTH * SCALE;
 canvas.height = HEIGHT * SCALE;
 
+// Load the player sprite
+const playerSprite = new Image();
+playerSprite.src = "https://cdn.jsdelivr.net/gh/Stinkalistic/zombie-game@main/zombguy.png";
+
 // Game state
 let player = { x: WIDTH / 2, y: HEIGHT / 2, dir: 0, speed: 2, health: 100, ammo: 10, reloadTime: 0 };
 let zombies = [];
@@ -131,10 +135,11 @@ function draw() {
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
     // Draw player
-    ctx.fillStyle = "blue";
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, 5, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.dir);
+    ctx.drawImage(playerSprite, -8, -8, 16, 16); // Adjust size to fit game scale
+    ctx.restore();
 
     // Draw zombies
     ctx.fillStyle = "green";
