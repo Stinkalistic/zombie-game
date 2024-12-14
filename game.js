@@ -20,6 +20,10 @@ let keys = {};
 let level = 1;
 let flashlightRadius = 60;
 
+// Track mouse position
+let mouseX = WIDTH / 2;
+let mouseY = HEIGHT / 2;
+
 // Initialize zombies
 function spawnZombies(count) {
     for (let i = 0; i < count; i++) {
@@ -35,9 +39,15 @@ function spawnZombies(count) {
 // Handle input
 document.addEventListener("keydown", (e) => (keys[e.key] = true));
 document.addEventListener("keyup", (e) => (keys[e.key] = false));
+canvas.addEventListener("mousemove", (e) => {
+    // Update mouse coordinates, adjusting for canvas scaling
+    const rect = canvas.getBoundingClientRect();
+    mouseX = (e.clientX - rect.left) / SCALE;
+    mouseY = (e.clientY - rect.top) / SCALE;
+});
 canvas.addEventListener("click", (e) => {
     if (player.ammo > 0 && player.reloadTime === 0) {
-        let angle = Math.atan2(e.offsetY / SCALE - player.y, e.offsetX / SCALE - player.x);
+        let angle = Math.atan2(mouseY - player.y, mouseX - player.x);
         bullets.push({ x: player.x, y: player.y, angle, speed: 5 });
         player.ammo--;
     }
@@ -64,6 +74,9 @@ function update() {
         if (player.reloadTime === 0) player.ammo = 10;
     }
 
+    // Rotate player to face the mouse pointer
+    player.dir = Math.atan2(mouseY - player.y, mouseX - player.x);
+
     // Move zombies
     zombies.forEach((zombie) => {
         let angle = Math.atan2(player.y - zombie.y, player.x - zombie.x);
@@ -87,104 +100,4 @@ function update() {
             if (dist < 10) {
                 score++;
                 hit = true;
-                return false;
-            }
-            return true;
-        });
-        return !hit && bullet.x >= 0 && bullet.y >= 0 && bullet.x < WIDTH && bullet.y < HEIGHT;
-    });
-
-    // Check for player collisions with zombies
-    zombies.forEach((zombie) => {
-        const dx = player.x - zombie.x;
-        const dy = player.y - zombie.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 10) {
-            player.health -= 1;
-        }
-    });
-
-    // Check if player is dead
-    if (player.health <= 0) {
-        alert(`Game Over! Your score: ${score}`);
-        resetGame();
-    }
-
-    // Level progression
-    if (zombies.length === 0) {
-        level++;
-        spawnZombies(level * 5);
-    }
-}
-
-// Draw everything
-function draw() {
-    // Scale canvas
-    ctx.save();
-    ctx.scale(SCALE, SCALE);
-
-    // Clear canvas
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-    // Draw flashlight effect
-    const gradient = ctx.createRadialGradient(player.x, player.y, 10, player.x, player.y, flashlightRadius);
-    gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0.9)");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-    // Draw player
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.rotate(player.dir);
-    ctx.drawImage(playerSprite, -8, -8, 16, 16); // Adjust size to fit game scale
-    ctx.restore();
-
-    // Draw zombies
-    ctx.fillStyle = "green";
-    zombies.forEach((zombie) => {
-        ctx.beginPath();
-        ctx.arc(zombie.x, zombie.y, 5, 0, Math.PI * 2);
-        ctx.fill();
-    });
-
-    // Draw bullets
-    ctx.fillStyle = "red";
-    bullets.forEach((bullet) => {
-        ctx.beginPath();
-        ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
-        ctx.fill();
-    });
-
-    // Draw UI
-    ctx.fillStyle = "white";
-    ctx.fillText(`Score: ${score}`, 10, 10);
-    ctx.fillText(`Health: ${player.health}`, 10, 20);
-    ctx.fillText(`Ammo: ${player.ammo}`, 10, 30);
-    if (player.reloadTime > 0) ctx.fillText("Reloading...", 10, 40);
-
-    // Restore canvas
-    ctx.restore();
-}
-
-// Reset game
-function resetGame() {
-    player = { x: WIDTH / 2, y: HEIGHT / 2, dir: 0, speed: 2, health: 100, ammo: 10, reloadTime: 0 };
-    zombies = [];
-    bullets = [];
-    score = 0;
-    level = 1;
-    spawnZombies(5);
-}
-
-// Main game loop
-function gameLoop() {
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-// Start the game
-resetGame();
-gameLoop();
+                r
